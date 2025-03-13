@@ -1,0 +1,80 @@
+{% extends "core/base_bs.html" %}
+{% load i18n humanize static %}
+
+{% block page_title %}
+<title> {% trans "Access requests" %} - ikwen </title>
+{% endblock %}
+
+{% block head_style %}
+    {{ block.super }}
+    <link href="{% static 'ikwen/css/console.css' %}" media="screen" rel="stylesheet" type="text/css" />
+    <style>
+        body {background: #f6f6f6}
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="content" class="container">
+        <div id="stage">
+            <div id="cards">
+                {% for elt in access_requests %}
+                    {% with rq=elt.rq member=elt.rq.member %}
+                        <section id="{{ rq.id }}" class="access-request card subtle-shade">
+                            <div class="logo">
+                                {% if member.photo and member.photo.name %}
+                                    <a href="{% url 'ikwen:profile' member.id %}">
+                                        <img src="{{ settings.IKWEN_MEDIA_URL }}{{ member.photo.small_name }}"/>
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'ikwen:profile' member.id %}">
+                                        <img src="{% static 'ikwen/img/login-avatar.jpg' %}"/>
+                                    </a>
+                                {% endif %}
+                                <p class="member-name">{{ member.last_name }}</p>
+                            </div>
+                            <div class="details row">
+                                <div class="about">
+                                    <div class="col-xs-12 col-sm-6">
+                                        <h4 style="margin-top: 0">{{ rq.get_title }}</h4>
+                                        <p>{% trans "This person would like to join your community on" %}
+                                            <a href="{{ rq.service.url }}">{{ rq.service.project_name }}</a></p>
+                                    </div>
+                                    <div class="spacer"></div>
+                                    <div class="col-xs-6 col-sm-3 action">
+                                        <button class="btn btn-success btn-sm btn-block allow-access" data-request-id="{{ rq.id }}">{% trans "Grant access" %}</button>
+                                    </div>
+                                    <div class="col-xs-6 col-sm-3 action" style="cursor: pointer; font-weight: 700; padding-top: 7px">
+                                        <span class="text-danger deny-access" data-request-id="{{ rq.id }}">{% trans "No, Refuse" %}</span>
+                                    </div>
+                                </div>
+                                <div class="groups" style="display: none">
+                                    <div class="group-choice">
+                                        <h3>{% trans "Add to group ..." %}</h3>
+                                        {% for group in elt.groups %}
+                                            <div class="form-group">
+                                                <div class="radio"> <label> <input type="radio" class="group" name="group" value="{{ group.id }}" /> {{ group.name }} </label> </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <p class="text-success" style="display: none">{% trans "Access successfully granted to member." %}</p>
+                                    <div class="col-xs-6 col-sm-4 col-md-3" style="margin-left: -15px">
+                                        <button class="btn btn-success btn-sm btn-block confirm-group"
+                                                data-request-id="{{ rq.id }}">{% trans "Confirm" %}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    {% endwith %}
+                {% empty %}
+                    <section class="subtle-shade">{% trans "No pending request" %}</section>
+                {% endfor %}
+            </div>
+        </div>
+        {% include 'core/snippets/ads.html' %}
+        <div class="clearfix"></div>
+    </div>
+{% endblock %}
+{% block js %}
+    {{ block.super }}
+    {% include 'accesscontrol/snippets/request_management.html' %}
+{% endblock %}

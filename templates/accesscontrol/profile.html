@@ -1,0 +1,404 @@
+{% extends "core/base_bs.html" %}
+{% load i18n humanize static auth_tokens %}
+
+{% block meta %}
+    {{ block.super }}
+    <meta name="theme-color" content="#233682">
+    <meta name="msapplication-navbutton-color" content="#233682">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#233682">
+    <meta property="og:type" content="Website" />
+    {% if cr_profile %}
+        <meta property="og:title" content="{{ profile_name }}" />
+        {% if coupon_list %}
+            <meta property="og:image" content="{% get_media_prefix %}{{ coupon_list.0.image.name }}" />
+        {% elif config.cover_image %}
+            <meta property="og:image" content="{% get_media_prefix %}{{ config.cover_image.name }}" />
+        {% else %}
+            <meta property="og:image" content="{% get_media_prefix %}{{ config.logo.name }}" />
+        {% endif %}
+        {% if user.is_authenticated %}
+            <meta property="og:description" content="{% blocktrans with first_name=user.first_name %}{{ first_name }} is inviting you to join {{ profile_name }} and earn some free gifts.{% endblocktrans %}" />
+        {% else %}
+            <meta property="og:description" content="{% trans "We have some free gifts for you. Collect them now." %}" />
+        {% endif %}
+        <meta name="description" content="{% blocktrans %}Join {{ profile_name }} on ikwen and get some free gifts !{% endblocktrans %}" />
+        <meta property="og:site_name" content="www.ikwen.com" />
+    {% else %}
+        <meta property="og:title" content="{{ profile_name }}" />
+        <meta property="og:image" content="{% get_media_prefix %}{{ config.logo.name }}" />
+        <meta property="og:description" content="{% blocktrans %}Join {{ profile_name }} on ikwen !{% endblocktrans %}" />
+        <meta name="description" content="{% blocktrans %}Join {{ profile_name }} on ikwen !{% endblocktrans %}" />
+        <meta property="og:site_name" content="www.ikwen.com" />
+    {% endif %}
+{% endblock %}
+
+{% block page_title %}
+<title> {{ profile_name }} - ikwen </title>
+{% endblock %}
+{% block head_style %}
+    {{ block.super }}
+    <link href="{% static 'ikwen/css/console.css' %}?v=20.3.24" media="screen" rel="stylesheet" type="text/css" />
+    <link rel='stylesheet' href="{% static 'ikwen/swiper/css/swiper.min.css' %}" />
+    <style>
+        body {background: #f6f6f6; padding-bottom: 200px}
+        {% if profile_cover_url %}
+            #cover {background-image: url({{ profile_cover_url }})}
+        {% else %}
+            {% if is_company %}
+                #cover {
+                    background-image: url({% static 'ikwen/img/default-cover-company.jpg' %})
+                }
+            {% else %}
+                #cover {
+                    background-image: url({% static 'ikwen/img/default-cover.jpg' %})
+                }
+            {% endif %}
+        {% endif %}
+        {% if profile_photo_url %}
+            #banner .frame .photo {background-image: url({{ profile_photo_url }})}
+        {% else %}
+            {% if is_company %}
+                #banner .frame .photo {
+                    background-image: url({% static 'ikwen/img/logo-placeholder.jpg' %})
+                }
+            {% else %}
+                #banner .frame .photo {
+                    background-image: url({% static 'ikwen/img/login-avatar.jpg' %})
+                }
+            {% endif %}
+        {% endif %}
+
+        {% if is_console %}
+            @media (min-width: 476px) {
+                #banner h2 {
+                    margin-top: 210px
+                }
+            }
+        {% endif %}
+        #deploy {background: #7a1e31; border-color:  #7a1e31; color: #fff; font-weight: 700; letter-spacing: 2px}
+        #deploy:hover {background: #982035; border-color:  #982035}
+        #coupons .progress {margin: 0}
+        #coupons .progress-bar {background-color: #4CAF50;}
+        .coupon-count {color: #fff; float: right; height: 34px; margin-top: 146px; padding-right: 5px}
+        .coupon-count span {font-size: 26px; font-weight: 700}
+    </style>
+{% endblock %}
+
+{% block head_js %}
+    {{ block.super }}
+    <script src="{% static 'ikwen/swiper/js/swiper.jquery.min.js' %}"></script>
+{% endblock %}
+
+{% block header_brand %}
+    <a class="navbar-brand hidden-xs" href="{{ settings.IKWEN_BASE_URL }}">
+        <strong><span class="letter-i">i</span>kwen</strong>
+    </a>
+    <strong class="navbar-brand visible-xs"><span class="letter-i">i</span>kwen</strong>
+{% endblock %}
+
+{% block content %}
+    <div id="content" class="container">
+        <div class="edge-panel-left visible-xs">
+            <div class="wrapper">
+                <div class="stage">
+                    <a class="logo text-center" href="{% url 'home' %}">
+                        <img src="{% static 'ikwen/img/logo_ikwen_2018.png' %}" alt="ikwen logo" />
+                    </a>
+                    <div class="menu console-menu">
+                        <h4 class="text-muted">
+                            <div class="disc coupon">
+                                <i class="fas fa-ticket-alt"></i>
+                            </div>
+                            {% trans "My collection" %}
+                        </h4>
+                        {% if user.is_authenticated %}
+                        <ul style="padding: 0">
+                            {% for summary in coupon_summary_list %}
+                                {% with service=summary.service %}
+                                <li class="ik-li">
+                                    <a href="{% url 'ikwen:company_profile' service.project_name_slug %}">
+                                        <div class="image rounded" style="background-image: url({% get_media_prefix %}{{ service.config.logo.name }})">
+                                            {% if summary.threshold_reached %}
+                                                <i class="threshold-reached"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="info">
+                                            <span class="title">{{ service.project_name }}</span>
+                                            <p class="about">{{ summary.count }} {% trans "Coupons" %}</p>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                    </a>
+                                </li>
+                                {% endwith %}
+                            {% empty %}
+                                <li class="ik-li no-coupon">
+                                    <img src="{% static 'ikwen/img/empty-box.png' %}" class="img-responsive" />
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                            <div class="text-center">
+                                <p style="margin: 20px 0 30px">{% trans "Please, login to see your collected coupons" %}</p>
+                                <a class="btn btn-sm btn-success" href="{% url 'home' %}" style="width: 180px">{% trans "Login" %}</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <footer>
+                    &copy; {{ year }} <a href="http://www.ikwen.com"><strong>ikwen</strong></a>. {% trans "All rights reserved." %} -
+                    <a href="http://www.ikwen.com/legalMentions" style="text-decoration: underline">{% trans "Legal mentions" %}</a>
+                </footer>
+            </div>
+        </div>
+        {% block stage %}
+            <div id="stage">
+                {% if is_company and not is_member %}
+                    {% include 'rewarding/snippets/cr_join_widget.html' %}
+                {% endif %}
+                <header id="cover" class="subtle-shade">
+                    <div id="banner">
+                        <div class="frame">
+                            <div class="photo"></div>
+                            <h2 class="text-has-shade name visible-xs">{{ profile_name|truncatewords:"2" }}</h2>
+                        </div>
+                        <h2 class="text-has-shade name hidden-xs">{{ profile_name }}</h2>
+                    </div>
+                </header>
+                {% if coupon_list %}
+                <div id="coupons" class="card-ul">
+                    <div class="card subtle-shade">
+                        <div>
+                            <h3 class="pull-left" style="font-size: 18px; margin-top: 0">{% trans "Our free coupons" %}</h3>
+                            <div class="dropdown social-sharing pull-right">
+                                <a class="dropdown-toggle" href="javascript:;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-share-alt" style="color: #243682; font-size: 21px; margin-right: 10px"></i>
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="share-coupons">
+                                    <li class="visible-xs visible-sm">
+                                        <a href="javascript:;" data-toggle="modal" data-target="#whatsapp-share">
+                                            <i class="fab fa-whatsapp"></i>
+                                            WhatsApp
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="https://facebook.com/sharer/sharer.php?u={{ url }}" target="_blank">
+                                            <i class="fab fa-facebook"></i>
+                                            Facebook
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="https://twitter.com/home?status={{ url }}" target="_blank">
+                                            <i class="fab fa-twitter"></i>
+                                            Twitter
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="row">
+                            <div class="row swiper-container" style="margin-top: 5px">
+                                <div class="swiper-wrapper">
+                                {% for coupon in coupon_list %}
+                                    <div class="col-xs-4 col-sm-3 card-li swiper-slide" style="text-align: center">
+                                        <div>
+                                            <div class="img coupon-img" data-id="{{ coupon.id }}" style="background-image: url({% get_media_prefix %}{{ coupon.image.name }})">
+                                                {% if user.is_authenticated %}
+                                                <div class="text-has-shade coupon-count">
+                                                    <span>{{ coupon.count }}</span>/100
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% if user.is_authenticated %}
+                                            <div class="progress">
+                                                <div class="progress-bar" style="width: {{ coupon.ratio|floatformat:"0" }}%">
+                                                    <span class="sr-only">{{ coupon.ratio }}% Complete</span>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            <p style="margin-top: 5px">{{ coupon.name }}</p>
+                                        </div>
+                                        {% if coupon.count >= 100 %}
+                                            <button class="btn btn-sm btn-block btn-warning claim-reward"
+                                                    data-toggle="modal" data-target="#claim-reward">
+                                                {% trans "Claim your reward" %}
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                </div>
+                                <div class="swiper-button-next has-shade">
+                                    <i class="fa fa-angle-right"></i>
+                                </div>
+                                <div class="swiper-button-prev has-shade">
+                                    <i class="fa fa-angle-left"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% if is_member %}
+                        <div>
+                            <p class="text-muted text-center" style="margin: 15px 0 25px">{% blocktrans %}
+                                Refer {{ profile_name }} to a friend by sharing and earn {{ referral_coupon_count }} more free coupons.
+                            {% endblocktrans %}</p>
+                            <div class="dropup social-sharing" style="width: 280px; margin: auto">
+                                <button class="btn btn-green btn-block dropdown-toggle" type="button" id="refer-menu"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    {% blocktrans with display_name=profile_name|truncatechars:"18" %}Refer {{ display_name }}{% endblocktrans %}
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="refer-menu">
+                                    <li class="visible-xs visible-sm">
+                                        <a href="javascript:;" data-toggle="modal" data-target="#whatsapp-share">
+                                            <i class="fab fa-whatsapp"></i>
+                                            WhatsApp
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="https://facebook.com/sharer/sharer.php?u={{ url }}" target="_blank">
+                                            <i class="fab fa-facebook"></i>
+                                            Facebook
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="https://twitter.com/home?status={{ url }}" target="_blank">
+                                            <i class="fab fa-twitter"></i>
+                                            Twitter
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                <div id="cards" style="width: 100%">
+                    <section id="about" class="card profile-about subtle-shade">
+                        {% if is_company and page_config.short_description %}
+                            {% if page_config.description %}
+                                <p style="color: #666; font-size: 18px; margin-bottom: 20px; text-align: justify">{{ page_config.description }}</p>
+                            {% else %}
+                                <p style="color: #666; font-size: 18px; margin-bottom: 20px">{{ page_config.short_description }}</p>
+                            {% endif %}
+                        {% else %}
+                            <h3 style="font-size: 18px">{% trans "About" %}</h3>
+                        {% endif %}
+                        <ul>
+                            {% if profile_gender %}
+                                <li>
+                                    <label>{% trans "Gender" %}</label>
+                                    <span>{{ profile_gender }}</span>
+                                </li>
+                            {% endif %}
+                            {% if profile_email %}
+                                <li>
+                                    <label>E-mail</label>
+                                    <span>{{ profile_email }}</span>
+                                </li>
+                            {% endif %}
+                            {% if profile_phone %}
+                                <li>
+                                    <label>{% trans "Phone" %}</label>
+                                    <a href="tel://{{ profile_phone }}">{{ profile_phone }}</a>
+                                </li>
+                            {% endif %}
+                            {% if is_company and not app %}
+                                <li>
+                                    <label>{% trans "Website" %}</label>
+                                    <span>
+                                        <a href="{{ page_service.url }}{% if request.GET.referrer %}?referrer={{ request.GET.referrer }}{% endif %}" target="_blank">{{ page_service.url }}</a>
+                                    </span>
+                                </li>
+                                {% if profile_address %}
+                                <li>
+                                    <label>{% trans "Address" %}</label>
+                                    <span>
+                                        {{ profile_addess }}
+                                    </span>
+                                </li>
+                                {% endif %}
+                            {% endif %}
+                        </ul>
+                        {% if app.is_public and app.deployment_url_name %}
+                            <div class="actions">
+                                <a id="deploy" class="btn btn-sm" href="{% url app.deployment_url_name %}">{% trans "DEPLOY" %}</a>
+                            </div>
+                        {% endif %}
+                    </section>
+                </div>
+            </div>
+            {% if is_company and not is_member %}
+                <div class="bottom-join has-shade">
+                    <div class="container-fluid">
+                        {% include 'rewarding/snippets/cr_join_widget.html' %}
+                    </div>
+                </div>
+            {% endif %}
+            {% include 'rewarding/snippets/cr_console_modals.html' %}
+        {% endblock %}
+        {% include 'core/snippets/ads.html' %}
+    </div>
+{% endblock %}
+{% block js %}
+    {{ block.super }}
+    {% with do_refer=request.GET.do_refer joined=request.GET.joined join_coupon_count=request.GET.join_coupon_count referral_coupon_count=request.GET.referral_coupon_count %}
+    {% include 'accesscontrol/snippets/request_management.html' %}
+    <script>
+        (function() {
+            var couponSwiper = new Swiper('#coupons .swiper-container', {
+                slidesPerView: 'auto',
+                nextButton: '.swiper-button-next',
+                prevButton: '.swiper-button-prev'
+            });
+            $('body').on('click', '.coupon-img', function() {
+                let id = $(this).data('id');
+                {% url 'rewarding:coupon_detail' as coupon_detail_url %}
+                $.getJSON('{{ coupon_detail_url }}', {id: id}, function(data) {
+                    if (data.error) {
+                        ikwen.showFloatingNotice(data.error, '', 6);
+                        return;
+                    }
+                    $('div#coupon-detail .modal-title').text(data.name);
+                    $('div#coupon-detail img').prop('src', data.image_url);
+                    $('div#coupon-detail .description').html(data.description);
+                    $('#coupon-detail').modal('show');
+                })
+            }).on('click', '#whatsapp-share .btn.ok', function() {
+                var msg = $('#whatsapp-share-msg').val(),
+                    url = $('.wsap-link').data('url');
+                window.location = 'https://api.whatsapp.com/send?text=' + url + '%0A%0A' + msg;
+            });
+            $(window).scroll(function() {
+                var scrollTop = $(this).scrollTop();
+                if (scrollTop > 150) $('.bottom-join').addClass('revealed');
+                else $('.bottom-join').removeClass('revealed');
+            });
+            {% if joined %}
+                $('div#modal-join-notice .speech > div, div#modal-join-notice .actions > div, .cr-refer').hide();
+                {% if  join_coupon_count or referral_coupon_count %}
+                    $('.reward-available').show();
+                    $('#modal-join-notice .claim').attr('href', "{% url 'ikwen:company_profile' request.GET.joined %}");
+                    if ("{{ request.GET.referral_coupon_count }}") {
+                        $('.cr-refer').show();
+                        $('.reward-available.col-sm-offset-4').removeClass('col-sm-offset-4');
+                    }
+                {% else %}
+                    $('.no-reward').show();
+                {% endif %}
+                $('#modal-join-notice').modal('show');
+            {% endif %}
+            {% if do_refer %}
+                {% if user.is_anonymous %}
+                    $('#modal-login-to-refer').modal('show');
+                {% else %}
+                    $('#modal-refer-now').modal('show');
+                {% endif %}
+            {% endif %}
+            {% if is_company %}
+                $('#modal-join-notice .invite-friends').click(function () {
+                    $('.social-sharing')
+                });
+            {% endif %}
+        })()
+    </script>
+    {% endwith %}
+{% endblock %}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../Entity/.idea/Entity.iml" filepath="$PROJECT_DIR$/../Entity/.idea/Entity.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Incident-Manager/.idea/Incident-Manager.iml" filepath="$PROJECT_DIR$/../Incident-Manager/.idea/Incident-Manager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Kakocase/.idea/Kakocase.iml" filepath="$PROJECT_DIR$/../Kakocase/.idea/Kakocase.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PurchaseRequest.iml" filepath="$PROJECT_DIR$/.idea/PurchaseRequest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../RH-SUPPORT-version-2/.idea/RH-SUPPORT-version-2.iml" filepath="$PROJECT_DIR$/../RH-SUPPORT-version-2/.idea/RH-SUPPORT-version-2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../ikwen/.idea/ikwen.iml" filepath="$PROJECT_DIR$/../ikwen/.idea/ikwen.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../pinsview/.idea/pinsview.iml" filepath="$PROJECT_DIR$/../pinsview/.idea/pinsview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../user-management/.idea/user-management.iml" filepath="$PROJECT_DIR$/../user-management/.idea/user-management.iml" />
+    </modules>
+  </component>
+</project>

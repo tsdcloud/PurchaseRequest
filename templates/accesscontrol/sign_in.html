@@ -1,0 +1,97 @@
+{% extends "core/base_bs.html" %}
+{% load i18n static auth_tokens %}
+
+{% block page_title %}<title>{{ service.project_name }} - {% trans "Sign in" %} </title>{% endblock %}
+{% block head_style %}
+    {{ block.super }}
+    <link rel='stylesheet' href="{% static 'ikwen/css/pwa.css' %}?v=20.8.6" />
+    <style  type="text/css">
+        #navbar {display: none}
+        label span {font-weight: normal}
+        #lg-username {text-transform: lowercase}
+        #terms-warning {color: #999; font-size: 11px}
+        .login-with-ikwen {font-size: 1em; letter-spacing: .5px}
+        .login-with-ikwen strong {color: #7ea6ca}
+        @media (max-width: 767px) {
+            #login-form {border: none!important;}
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="content" class="form">
+        <div class="container">
+            {% if login_form.errors %}
+                <p class="failure" style="font-size: 1em; padding: 9px">{{ error_message }}</p>
+            {% elif request.GET.msg %}
+                <p class="failure" style="font-size: 1em; padding: 9px">{{ request.GET.msg }}</p>
+            {% elif request.GET.successfulPasswordReset %}
+                <p class="success" style="font-size: 1em; padding: 9px">{% trans "Your password was successfully reset, login now." %}</p>
+            {% endif %}
+            {% if messages %}
+                {% for msg in messages %}<p class="msg-tag {{ msg.tags }}" style="font-size: 1em; padding: 9px">{{ msg }}</p>{% endfor %}
+            {% endif %}
+            <div id="login" class="form-wrapper">
+                <h3 style="text-align: center">
+                    <div style="margin-bottom: .3em; text-align: center">
+                        {% if config.logo.name %}
+                            <img src="{% get_media_prefix %}{{ config.logo.name }}" alt="Logo {{ service.project_name }}"
+                                 style="max-height: 80px"/>
+                        {% endif %}
+                    </div>
+                    {% trans "Login" %}
+                </h3>
+                <form id="login-form" action="{% url 'ikwen:sign_in' %}?{{ request.META.QUERY_STRING }}" method="post">{% csrf_token %}
+                    <div class="form-group" style="margin-top: .4em">
+                        <label for="lg-username">{% trans "Username or email" %}</label>
+                        <input id="lg-username" class="form-control input-md username" type="text" name="username" autofocus
+                               value="{{ request.GET.username }}{{ request.GET.phone }}" /> {#Only username or phone will be output depending on what is available#}
+                    </div>
+                    <div class="form-group">
+                        <label for="lg-password">{% trans "Password" %}</label>
+                        <input id="lg-password" class="form-control input-md password" type="password" name="password" />
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary btn-block btn-md">
+                            {% include 'core/snippets/button_spinner.html' %}
+                            {% trans "Submit" %}
+                        </button>
+                        {% url 'ikwen:forgotten_password' as forgotten_password_url %}
+                        <a style="float: left; margin-top: 7px" href="{{ forgotten_password_url }}">{% trans "Forgotten password ?" %}</a>
+                    </div>
+                </form>
+                <div style="clear: both; padding-top: 15px; text-align: center">
+                    {% trans "No account yet ?" %}
+                    <a id="show-register"
+                       href="{% url settings.REGISTER_URL %}?{{ request.META.QUERY_STRING }}">{% trans "Register" %}</a>
+                </div>
+            </div>
+            <div class="clear"></div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    {{ block.super }}
+    {% if service.is_pwa_ready %}
+        <script src="{% static 'ikwen/js/pwa-main.js' %}?v=20.5.31"></script>
+    {% endif %}
+    <script type="text/javascript">
+        {% get_current_language as LANGUAGE_CODE %}
+        (function() {
+            $('#lg-username').keyup(function(e) {
+                if (e.key === ' ') {
+                    var username = $(this).val().trim().toLowerCase();
+                    $(this).val(username);
+                }
+            }).blur(function() {
+                var username = $(this).val().replace(/ /g, '').toLowerCase();
+                $(this).val(username);
+            });
+            $('#login-form').submit(() => {
+                if ($('#login-form button').hasClass('processing')) return false;
+                $('#login-form button').addClass('processing')
+            });
+        })()
+    </script>
+    {{ config.scripts|safe }}
+{% endblock %}

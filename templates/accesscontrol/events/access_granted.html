@@ -1,0 +1,51 @@
+{% load i18n static humanize auth_tokens url_utils %}
+{% if is_iao %}
+    <div style="padding: 0 15px">
+        {% url 'ikwen:profile' member.id as profile_url  %}
+        {% if group_name != 'Community' %}
+            <h4 class="text-primary">{% trans "New collaborator" %}</h4>
+        {% else %}
+            <h4 class="text-primary">{% trans "New member" %}</h4>
+        {% endif %}
+        {% with service_url=service.go_url  %}
+        <div class="member" style="border-bottom: none; padding: 15px 0">
+            {% if member.photo and member.photo.name %}
+                <a href="{{ profile_url|ikwenize }}" class="photo"
+                   style="background-image: url({{ IKWEN_MEDIA_URL }}{{ member.photo.small_name }}); cursor: pointer"></a>
+            {% else %}
+                <a href="{{ profile_url|ikwenize }}" class="photo"
+                   style="background-image: url({% static 'ikwen/img/login-avatar.jpg' %}); cursor: pointer"></a>
+            {% endif %}
+            <div style="margin-left: 80px">
+                <a href="{{ profile_url|ikwenize }}" class="name"
+                   style="cursor: pointer; display: block; margin-bottom: 5px">{{ member.full_name }}</a>
+                {% url 'ikwen:community' as community_uri %}
+                {% if group_name != 'Community' %}
+                    <p class="about">{% blocktrans with community_url=community_uri|strip_base_alias %}
+                        Was granted access and added to
+                        <a href="{{ service_url }}{{ community_url }}?group_name={{ group_name }}"
+                           style="cursor: pointer">{{ group_name }}</a> group.
+                    {% endblocktrans %}</p>
+                {% else %}
+                    <p class="about">{% blocktrans with community_url=community_uri|strip_base_alias %}
+                        Joined your community.
+                        <a href="{{ service_url }}{{ community_url }}" style="cursor: pointer">View community</a>
+                    {% endblocktrans %}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endwith %}
+    </div>
+{% else %}
+    <div style="margin-top: -7px; padding: 0 15px">
+        <h4>{% trans "Welcome" %}</h4>
+        <p>
+            {% blocktrans %}You were happily added to our community. Thank you for joining us.{% endblocktrans %}
+        </p>
+        <div class="col-sm-8 col-sm-offset-2">
+            <a class="btn btn-block btn-green" href="{{ service.url }}">{% blocktrans with project_name=service.project_name %}
+                Visit {{ project_name }}
+            {% endblocktrans %}</a>
+        </div>
+    </div>
+{% endif %}
